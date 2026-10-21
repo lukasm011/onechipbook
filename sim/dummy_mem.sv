@@ -21,16 +21,16 @@ module dummy_mem#(
         else begin
             case(state)
                 IDLE: begin
+                    bus.svalid <= 0;
                     if(bus.mvalid) begin
-                        bus.svalid <= 0;
                         state <= (|bus.wstrb) ? WRITE : READ;
                     end
                 end
                 
                 READ: begin
                     bus.rdata <= mem[bus.addr[12 : 2]];
-                    bus.svalid <= 1;
                     state <= IDLE;
+                    bus.svalid <= 1;
                 end
                 
                 WRITE: begin
@@ -38,8 +38,8 @@ module dummy_mem#(
                     if(bus.wstrb[1]) mem[bus.addr[12 : 2]][15 : 8] <= bus.wdata[15 : 8];
                     if(bus.wstrb[2]) mem[bus.addr[12 : 2]][23 : 16] <= bus.wdata[23 : 16];
                     if(bus.wstrb[3]) mem[bus.addr[12 : 2]][31 : 24] <= bus.wdata[31 : 24];
-                    bus.svalid <= 1;
                     state <= IDLE;
+                    bus.svalid <= 1;
                 end
                 
             endcase

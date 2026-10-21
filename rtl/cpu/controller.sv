@@ -78,12 +78,12 @@ module controller (
                     srcbsel = 1; //Add 4
                     alu_controlvec[add_bit] = 1;
                     if(svalid) begin
-                        pcwrite = 1;
                         next_mvalid = 0;
                         next_state = DECODE;
                     end
                 end
                 DECODE: begin
+                    pcwrite = 1;
                     case(opcode)
                         rtype: begin
                             next_state = R_EXEC;
@@ -91,7 +91,6 @@ module controller (
                         itype: begin
                             next_state = I_EXEC;
                         end
-                        
                     endcase
                 end
                 R_EXEC: begin

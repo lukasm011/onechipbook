@@ -18,9 +18,6 @@ module cpu_tb;
         .bus(bus)
     );
 
-    
-    
-
     task assert_reset();
         resetn = 0;
         repeat(5) @(posedge clk);
@@ -29,12 +26,12 @@ module cpu_tb;
 
     always #5 clk <= ~clk;
     initial begin
-        $dumpfile("waveform.fst");
+        $dumpfile("obj_dir/waveform.fst");
         $dumpvars;
         clk = 0;
         resetn = 1;
         assert_reset();
-        repeat(10) @(posedge clk);
+        repeat(40) @(posedge clk);
         $finish;
     end
     

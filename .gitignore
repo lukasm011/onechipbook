@@ -2,3 +2,4 @@ project.sigasi
 .sigasi
 *.drawio
 sim/cpu/obj_dir/*
+sim/test_sw/build/*

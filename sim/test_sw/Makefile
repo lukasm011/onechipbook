@@ -9,7 +9,7 @@ test.hex: test.elf
 	$(PY_PATH) firmwarehexer.py --input $(BUILD_DIR)test.bin --output $(BUILD_DIR)test.hex --startaddr 0x0
 
 test.elf: $(ASM_OBJS)
-	riscv64-unknown-elf-ld -m elf32lriscv -T script.lds -o $(BUILD_DIR)$@ $^
+	riscv64-unknown-elf-ld --no-relax -m elf32lriscv -T script.lds -o $(BUILD_DIR)$@ $^
 
 $(ASM_OBJS): $(BUILD_DIR)%.o : %.asm
 	mkdir -p $(BUILD_DIR)

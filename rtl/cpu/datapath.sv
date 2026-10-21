@@ -18,7 +18,7 @@ module datapath#(
     nativepkg bus
 );
     logic [4 : 0] reg_addr_a, reg_addr_b, reg_addr_c;
-    logic [31 : 0] reg_data_a, reg_data_b, reg_data_c, alu_srca, alu_srcb, alu_result;
+    logic [31 : 0] reg_data_a, reg_data_b, reg_data_c, alu_srca, alu_srcb, alu_result_next, alu_result;
     logic [31 : 0] pc, pc_next, instr_reg, rf_out [2], rf_out_next[2], imm_zext;
 
     regfile #(
@@ -38,7 +38,7 @@ module datapath#(
     alu alu_instance (
         .srca(alu_srca),
         .srcb(alu_srcb),
-        .result(alu_result),
+        .result(alu_result_next),
         .controlvec(alu_controlvec)
     );
 
@@ -51,6 +51,9 @@ module datapath#(
 
         //IR DATA
         if(irwrite) instr_reg <= bus.rdata;
+
+        //ALU OUT
+        alu_result <= alu_result_next;
 
         //REGFILE DATA
         rf_out <= rf_out_next;

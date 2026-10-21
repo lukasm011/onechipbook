@@ -17,11 +17,11 @@ module regfile #(
             registers[2] <= STACKADDR; //sp
         end
         else begin
-            data_a <= |addr_a ? registers[addr_a] : 32'h0;
-            data_b <= |addr_b ? registers[addr_b] : 32'h0;
             if(enable & |addr_c) begin
                 registers[addr_c] <= data_c;
             end 
         end
     end
+    assign data_a = |addr_a ? registers[addr_a] : 32'h0;
+    assign data_b = |addr_b ? registers[addr_b] : 32'h0;
 endmodule
