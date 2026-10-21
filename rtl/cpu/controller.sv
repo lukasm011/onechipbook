@@ -8,7 +8,7 @@ module controller (
     output logic irwrite,
     output logic regsrc,
     output logic srcasel,
-    output logic srcbsel,
+    output logic [1 : 0] srcbsel,
     output logic mvalid,
     output logic pcsrc,
     input logic svalid,
@@ -18,6 +18,7 @@ module controller (
     logic [6 : 0] opcode;
     logic [2 : 0] funct3;
     logic [6 : 0] funct7;
+    logic [11 : 0] imm;
     //ALU Control bits
     localparam int add_bit = 0;
     localparam int sub_bit = 1;
@@ -31,10 +32,11 @@ module controller (
     localparam int arlog_bit = 9;
     //Opcodes
     localparam logic [6 : 0] rtype = 7'b0110011;
+    localparam logic [6 : 0] itype = 7'b0010011;
     // Next signal values
     logic next_mvalid;
     //States
-    typedef enum {FETCH, DECODE, R_EXEC, R_WB} state_t;
+    typedef enum {FETCH, DECODE, R_EXEC, R_WB, I_EXEC} state_t;
     state_t state, next_state;
     //
     // Clocked control
@@ -86,6 +88,10 @@ module controller (
                         rtype: begin
                             next_state = R_EXEC;
                         end
+                        itype: begin
+                            next_state = I_EXEC;
+                        end
+                        
                     endcase
                 end
                 R_EXEC: begin
@@ -112,6 +118,26 @@ module controller (
                     regsrc = 1;
                     regwrite = 1;
                     next_state = FETCH;
+                end
+                I_EXEC: begin
+                    srcbsel = 2;
+                    srcasel = 1;
+                    case(funct3)
+                        0: alu_controlvec[add_bit] = 1;
+                        1: alu_controlvec[sll_bit] = 1;
+                        2: alu_controlvec[cmps_bit] = 1;
+                        3: alu_controlvec[cmpu_bit] = 1;
+                        4: alu_controlvec[xor_bit] = 1;
+                        5: begin
+                           alu_controlvec[sr_bit] = 1;
+                           if(|imm[11:5]) alu_controlvec[arlog_bit] = 1; 
+                        end
+                        6:
+                            alu_controlvec[or_bit] = 1;
+                        7:
+                            alu_controlvec[and_bit] = 1;
+                    endcase
+                    next_state = R_WB;
                 end
             endcase
         end

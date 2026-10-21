@@ -3,7 +3,8 @@ module cpu_top(
     input logic resetn,
     nativepkg bus
 );
-    logic regwrite, pcwrite, irwrite, memoutsrc, regsrc, srcasel, srcbsel, pcsrc;
+    logic regwrite, pcwrite, irwrite, memoutsrc, regsrc, srcasel, pcsrc;
+    logic [1 : 0] srcbsel;
     logic [9 : 0] alu_controlvec;
     logic [31 : 0] instr;
     datapath datapath_instance (

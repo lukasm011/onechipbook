@@ -11,7 +11,7 @@ module datapath#(
     input logic irwrite,
     input logic regsrc,
     input logic srcasel,
-    input logic srcbsel,
+    input logic [1 : 0] srcbsel,
     input logic pcsrc,
     output logic [31 : 0] instr,
     //BUS INTERFACE
@@ -19,7 +19,7 @@ module datapath#(
 );
     logic [4 : 0] reg_addr_a, reg_addr_b, reg_addr_c;
     logic [31 : 0] reg_data_a, reg_data_b, reg_data_c, alu_srca, alu_srcb, alu_result;
-    logic [31 : 0] pc, pc_next, instr_reg, rf_out [2], rf_out_next[2];
+    logic [31 : 0] pc, pc_next, instr_reg, rf_out [2], rf_out_next[2], imm_zext;
 
     regfile #(
         .STACKADDR('hffff)
@@ -67,10 +67,12 @@ module datapath#(
 
         // ALU SIGNALS
         alu_srca = srcasel ? rf_out[0] : pc;
+        imm_zext = {'0, instr[31 : 20]};
         case(srcbsel)
             0: alu_srcb = rf_out[1];
             1: alu_srcb = 4; //for PC incrementation
-            default: begin end //TODO 2 and 3
+            2: alu_srcb = imm_zext;
+            default: begin end //TODO and 3
         endcase
 
         // BUS SIGNALS
