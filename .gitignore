@@ -1,3 +1,4 @@
 project.sigasi
 .sigasi
 *.drawio
+sim/cpu/obj_dir/*

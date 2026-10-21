@@ -22,7 +22,7 @@ module alu(
     logic [32 : 0] add_res;
     logic [31 : 0] add_srca, add_srcb;
     
-    assign add_res = {1'b0, add_srca} + {1'b0, add_srcb} + (| {controlvec[1], controlvec[2], controlvec[3]});
+    assign add_res = {1'b0, add_srca} + {1'b0, add_srcb} + {31'h0, (|controlvec[3 : 1])};
     assign add_srca = srca;
     assign add_srcb = | {controlvec[1], controlvec[2], controlvec[3]}  ? ~srcb : srcb;
     //cmps
@@ -43,22 +43,24 @@ module alu(
     //sll
     logic [31 : 0] sll_res;
     always_comb begin
-        for(int i = 0; i < 32; i++) begin
-            integer from_index = i - srcb[4 : 0];
+        logic [4 : 0] from_index;
+        for(logic [5 : 0] i = 0; i <= 31; i++) begin
+            from_index = i[4 : 0] - srcb[4 : 0];
             sll_res[i] = from_index < 0 ? 0 : srca[from_index];
         end
     end
     //sr
     logic [31 : 0] sr_res;
     always_comb begin
-        for(int i = 0; i < 32; i++) begin
-            integer from_index = i + srcb[4 : 0];
+        logic [4 : 0] from_index;
+        for(logic [5 : 0] i = 0; i <= 31; i++) begin
+            from_index = i[4 : 0] + srcb[4 : 0];
             sr_res[i] = from_index > 31 ? srca[31] & controlvec[9] : srca[from_index];
         end
     end
     //result mux
-    assign result = | {controlvec[0], controlvec[1]} ? add_res : controlvec[2] ? {31'h0, cmps_res} :
+    assign result = | controlvec[1 : 0] ? add_res[31 : 0] : controlvec[2] ? {31'h0, cmps_res} :
                     controlvec[3] ? {31'h0, cmpu_res} : controlvec[4] ? xor_res : controlvec[5] ? or_res :
-                    controlvec[6] ? and_res : controlvec[7] ? sll_res : sr_res;
+                    controlvec[6] ? and_res : controlvec[7] ? sll_res : controlvec[8] ? sr_res : 0;
 
 endmodule

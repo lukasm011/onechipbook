@@ -10,6 +10,7 @@ module controller (
     output logic srcasel,
     output logic srcbsel,
     output logic mvalid,
+    output logic pcsrc,
     input logic svalid,
     input logic [31 : 0] instr
 );
@@ -29,7 +30,7 @@ module controller (
     localparam int sr_bit = 8;
     localparam int arlog_bit = 9;
     //Opcodes
-    localparam int rtype = 7'b0110011;
+    localparam logic [6 : 0] rtype = 7'b0110011;
     // Next signal values
     logic next_mvalid;
     //States
@@ -58,18 +59,24 @@ module controller (
         srcasel = 0;
         srcbsel = 0;
         next_mvalid = 0;
-        next_state <= state;
+        next_state = state;
+        pcsrc = 0;
+        opcode = instr[6 : 0];
+        funct3 = instr[14 : 12];
+        funct7 = instr[31 : 25];
         if(~resetn) begin
-            next_state <= DECODE;
+            next_state = FETCH;
+            pcsrc = 1; //LOAD PROGADDR_START
+            pcwrite = 1;
         end else begin
             case(state)
                 FETCH: begin
-                    memoutsrc = 0;
-                    pcwrite = 0;
                     next_mvalid = 1;
                     irwrite = 1;
+                    srcbsel = 1; //Add 4
+                    alu_controlvec[add_bit] = 1;
                     if(svalid) begin
-                        irwrite = 0;
+                        pcwrite = 1;
                         next_mvalid = 0;
                         next_state = DECODE;
                     end
@@ -85,14 +92,14 @@ module controller (
                     srcbsel = 0;
                     srcasel = 1;
                     case(funct3)
-                        0: alu_controlvec[funct7 ? sub_bit : add_bit] = 1;
+                        0: alu_controlvec[|funct7 ? sub_bit : add_bit] = 1;
                         1: alu_controlvec[sll_bit] = 1;
                         2: alu_controlvec[cmps_bit] = 1;
                         3: alu_controlvec[cmpu_bit] = 1;
                         4: alu_controlvec[xor_bit] = 1;
                         5: begin
                            alu_controlvec[sr_bit] = 1;
-                           if(funct7) alu_controlvec[arlog_bit] = 1; 
+                           if(|funct7) alu_controlvec[arlog_bit] = 1; 
                         end
                         6:
                             alu_controlvec[or_bit] = 1;
@@ -104,12 +111,9 @@ module controller (
                 R_WB: begin
                     regsrc = 1;
                     regwrite = 1;
-                    next_state = DECODE;
+                    next_state = FETCH;
                 end
             endcase
         end
-        opcode = instr[6 : 0];
-        funct3 = instr[14 : 12];
-        funct7 = instr[31 : 25];
     end
 endmodule
