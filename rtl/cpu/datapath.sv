@@ -19,7 +19,7 @@ module datapath#(
 );
     logic [4 : 0] reg_addr_a, reg_addr_b, reg_addr_c;
     logic [31 : 0] reg_data_a, reg_data_b, reg_data_c, alu_srca, alu_srcb, alu_result_next, alu_result;
-    logic [31 : 0] pc, pc_next, instr_reg, rf_out [2], rf_out_next[2], imm_zext;
+    logic [31 : 0] pc, pc_next, instr_reg, rf_out [2], rf_out_next[2], imm_sext;
 
     regfile #(
         .STACKADDR('hffff)
@@ -70,11 +70,11 @@ module datapath#(
 
         // ALU SIGNALS
         alu_srca = srcasel ? rf_out[0] : pc;
-        imm_zext = {'0, instr[31 : 20]};
+        imm_sext = {20'(instr[31]), instr[31 : 20]};
         case(srcbsel)
             0: alu_srcb = rf_out[1];
             1: alu_srcb = 4; //for PC incrementation
-            2: alu_srcb = imm_zext;
+            2: alu_srcb = imm_sext;
             default: begin end //TODO and 3
         endcase
 
@@ -88,6 +88,8 @@ module datapath#(
         // REGFILE SIGNALS
         rf_out_next[0] = reg_data_a;
         rf_out_next[1] = reg_data_b;
+
+        //INSTR
+        instr = instr_reg;
     end
-    assign instr = instr_reg;
 endmodule
