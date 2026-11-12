@@ -1,4 +1,4 @@
-interface axipkg;
+interface axi_if;
     //AW BUS
 	logic mem_axi_awvalid;
 	logic mem_axi_awready;
@@ -21,14 +21,13 @@ interface axipkg;
     logic mem_axi_rvalid;
 	logic mem_axi_rready;
 	logic [31 : 0] mem_axi_rdata;
-endinterface : axipkg
+endinterface : axi_if
 
-interface nativepkg;
+interface native_if;
 	logic [31 : 0] addr;
 	logic mvalid;
 	logic svalid;
 	logic [31 : 0] rdata;
 	logic [31 : 0] wdata;
-	logic [3 : 0] wstrb; 
-endinterface : nativepkg
-
+	logic [3 : 0] wstrb;
+endinterface : native_if
