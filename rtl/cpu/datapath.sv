@@ -70,7 +70,7 @@ module datapath#(
 
         // ALU SIGNALS
         alu_srca = srcasel ? rf_out[0] : pc;
-        imm_sext = {20'(instr[31]), instr[31 : 20]};
+        imm_sext = {{20{instr[31]}}, instr[31 : 20]};
         case(srcbsel)
             0: alu_srcb = rf_out[1];
             1: alu_srcb = 4; //for PC incrementation
