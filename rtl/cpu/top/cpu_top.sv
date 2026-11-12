@@ -1,7 +1,7 @@
 module cpu_top(
     input logic clk,
     input logic resetn,
-    nativepkg bus
+    native_if bus
 );
     logic regwrite, pcwrite, irwrite, memoutsrc, regsrc, srcasel, pcsrc;
     logic [1 : 0] srcbsel;

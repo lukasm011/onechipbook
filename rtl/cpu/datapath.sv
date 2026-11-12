@@ -15,7 +15,7 @@ module datapath#(
     input logic pcsrc,
     output logic [31 : 0] instr,
     //BUS INTERFACE
-    nativepkg bus
+    native_if bus
 );
     logic [4 : 0] reg_addr_a, reg_addr_b, reg_addr_c;
     logic [31 : 0] reg_data_a, reg_data_b, reg_data_c, alu_srca, alu_srcb, alu_result_next, alu_result;

@@ -3,7 +3,7 @@ module dummy_mem#(
 )(
     input logic clk,
     input logic resetn,
-    nativepkg bus
+    native_if bus
 );
     logic [31 : 0] mem [0 : MEM_WORDS];
     initial $readmemh("/home/lukas/digital/onechipbook/sim/test_sw/build/test.hex", mem);
@@ -26,13 +26,13 @@ module dummy_mem#(
                         state <= (|bus.wstrb) ? WRITE : READ;
                     end
                 end
-                
+
                 READ: begin
                     bus.rdata <= mem[bus.addr[12 : 2]];
                     state <= IDLE;
                     bus.svalid <= 1;
                 end
-                
+
                 WRITE: begin
                     if(bus.wstrb[0]) mem[bus.addr[12 : 2]][7 : 0] <= bus.wdata[7 : 0];
                     if(bus.wstrb[1]) mem[bus.addr[12 : 2]][15 : 8] <= bus.wdata[15 : 8];
@@ -41,11 +41,11 @@ module dummy_mem#(
                     state <= IDLE;
                     bus.svalid <= 1;
                 end
-                
+
             endcase
         end
-        
-        
+
+
     end
-    
+
 endmodule

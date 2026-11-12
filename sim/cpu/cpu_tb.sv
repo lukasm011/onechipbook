@@ -3,7 +3,7 @@
 
 module cpu_tb;
     logic clk, resetn;
-    nativepkg bus();
+    native_if bus();
     cpu_top dut (
         .clk(clk),
         .resetn(resetn),
@@ -34,6 +34,6 @@ module cpu_tb;
         repeat(40) @(posedge clk);
         $finish;
     end
-    
-    
+
+
 endmodule
