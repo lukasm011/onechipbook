@@ -8,6 +8,9 @@ test.hex: test.elf
 	riscv64-unknown-elf-objcopy -O binary $(BUILD_DIR)$< $(BUILD_DIR)test.bin
 	$(PY_PATH) firmwarehexer.py --input $(BUILD_DIR)test.bin --output $(BUILD_DIR)test.hex --startaddr 0x0
 
+test_sim.elf: $(ASM_OBJS)
+	riscv64-unknown-elf-ld --no-relax -m elf32lriscv -T script_sim.lds -o $(BUILD_DIR)$@ $^
+
 test.elf: $(ASM_OBJS)
 	riscv64-unknown-elf-ld --no-relax -m elf32lriscv -T script.lds -o $(BUILD_DIR)$@ $^
 
@@ -17,3 +20,4 @@ $(ASM_OBJS): $(BUILD_DIR)%.o : %.asm
 
 clean:
 	rm -rf $(ASM_OBJS) $(addprefix $(BUILD_DIR)test, .hex .bin .elf)
+	rm -if $(ASM_OBJS) $(addprefix $(BUILD_DIR)test_sim, .elf)

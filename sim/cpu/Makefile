@@ -5,7 +5,6 @@ CAD_ENV := ~/oss-cad-suite/bin/
 
 sim: #$(CPU_SRCS)
 	$(CAD_ENV)verilator $(VERILATOR_FLAGS) --top-module cpu_tb $(CPU_SRCS) ../dummy_mem.sv cpu_tb.sv
-	./obj_dir/Vcpu_tb
 
 clean:
 	rm -rf obj_dir/*
