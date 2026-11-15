@@ -66,6 +66,7 @@ module controller (
         opcode = instr[6 : 0];
         funct3 = instr[14 : 12];
         funct7 = instr[31 : 25];
+        imm = instr[31 : 20];
         if(~resetn) begin
             next_state = FETCH;
             pcsrc = 1; //LOAD PROGADDR_START
@@ -104,7 +105,7 @@ module controller (
                         4: alu_controlvec[xor_bit] = 1;
                         5: begin
                            alu_controlvec[sr_bit] = 1;
-                           if(|funct7) alu_controlvec[arlog_bit] = 1; 
+                           if(!funct7) alu_controlvec[arlog_bit] = 1; 
                         end
                         6:
                             alu_controlvec[or_bit] = 1;
@@ -129,7 +130,7 @@ module controller (
                         4: alu_controlvec[xor_bit] = 1;
                         5: begin
                            alu_controlvec[sr_bit] = 1;
-                           if(|imm[11:5]) alu_controlvec[arlog_bit] = 1; 
+                           if(!imm[11:5]) alu_controlvec[arlog_bit] = 1;  
                         end
                         6:
                             alu_controlvec[or_bit] = 1;
