@@ -43,19 +43,19 @@ module alu(
     //sll
     logic [31 : 0] sll_res;
     always_comb begin
-        logic [4 : 0] from_index;
+        logic [5 : 0] from_index;
         for(logic [5 : 0] i = 0; i <= 31; i++) begin
             from_index = i[4 : 0] - srcb[4 : 0];
-            sll_res[i] = from_index < 0 ? 0 : srca[from_index];
+            sll_res[i] = signed'(from_index) < 0 ? 0 : srca[from_index];
         end
     end
     //sr
     logic [31 : 0] sr_res;
     always_comb begin
-        logic [4 : 0] from_index;
+        logic [5 : 0] from_index;
         for(logic [5 : 0] i = 0; i <= 31; i++) begin
             from_index = i[4 : 0] + srcb[4 : 0];
-            sr_res[i] = from_index > 31 ? srca[31] & controlvec[9] : srca[from_index];
+            sr_res[i] = from_index > 31 ? srca[31] & ~controlvec[9] : srca[from_index];
         end
     end
     //result mux
