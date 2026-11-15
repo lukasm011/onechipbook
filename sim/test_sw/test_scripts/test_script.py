@@ -1,11 +1,16 @@
 import subprocess
 import re
+import argparse
 
 TEST_SIM = "/home/lukas/digital/onechipbook/sim/test_sw/build/test_sim.elf"
 TESTBENCH = "/home/lukas/digital/onechipbook/sim/cpu/obj_dir/Vcpu_tb"
-CMD_FILE = "/home/lukas/digital/onechipbook/sim/test_sw/spike_cmds.txt"
+CMD_FILE = "/home/lukas/digital/onechipbook/sim/test_sw/build/spike_cmds.txt"
 expected_x5 = 0
 expected_x6 = 0
+# CL Arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('-hex', action="store")
+args=parser.parse_args()
 
 ABI_TO_X = {
     "zero": 0, "ra": 1, "sp": 2, "gp": 3, "tp": 4,
@@ -16,10 +21,6 @@ ABI_TO_X = {
     "s2": 18, "s3": 19, "s4": 20, "s5": 21, "s6": 22,
     "s7": 23, "s8": 24, "s9": 25, "s10": 26, "s11": 27,
     "t3": 28, "t4": 29, "t5": 30, "t6": 31,
-}
-
-EXEMPT_REGS = {
-	2, 8, 10, 11, 12, 13, 14, 15, 16, 17
 }
 
 program_size = int(subprocess.run(["riscv64-unknown-elf-size", TEST_SIM], capture_output=True).stdout.decode('ASCII').split()[6])
@@ -42,9 +43,11 @@ golden_model = {ABI_TO_X.get(r): golden_model.get(r) for r in golden_model}
 
 #print(golden_model)
 
-#print(f"progsize {program_size}") DEBUG
+#print(f"\033[91mprogsize {program_size}\033[0m")
+print(args.hex)
+real_model = subprocess.run([TESTBENCH, f"+PROGSIZE={program_size}", f"+HEX_FILE={args.hex}"], capture_output=True)
 
-real_model = subprocess.run([TESTBENCH, f"+PROGSIZE={program_size}", f"+EXPECTEDX5={expected_x5}", f"+EXPECTEDX6={expected_x6}"], capture_output=True)
+#print("\033[91mCompleted real model\033[0m")
 
 real_model = dict((re.findall("([0-9]+): ([0-9a-f]{8})", real_model.stdout.decode('ASCII'))))
 
@@ -58,9 +61,8 @@ test = True
 
 for i in range(1, 32):
 	#print(f"{int(golden_model.get(i), 16)} and {str(real_model.get(i))} for val {i}") DEBUG
-	if(not (i in EXEMPT_REGS)):
-		if((int(golden_model.get(i), 16) != int("0x"+str(real_model.get(i)), 16))):
-			print(f"Test failed! Register {i} is {real_model.get(i)}, should be {golden_model.get(i)}")
-			test = False
+	if((int(golden_model.get(i), 16) != int("0x"+str(real_model.get(i)), 16))):
+		print(f"\033[0mTest failed! Register {i} is {real_model.get(i)}, should be {golden_model.get(i)}\033[0m")
+		test = False
 if(test):
-	print("Test passed!")
+	print("\033[92mTest passed!\033[0m")

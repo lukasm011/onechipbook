@@ -1,8 +1,15 @@
 .PHONY: clean
 BUILD_DIR := build/
-ASM_SRCS := r_type.asm
-ASM_OBJS := $(patsubst %.asm, $(BUILD_DIR)%.o, $(ASM_SRCS))
+ASM_SRCS := assembly1.s
+ASM_OBJS := $(patsubst %.s, $(BUILD_DIR)%.o, $(ASM_SRCS))
 PY_PATH := ~/venvs/cocotb-venv/bin/python3
+DUT_PATH := /home/lukas/digital/onechipbook/sim/cpu/
+HEX_PATH := /home/lukas/digital/onechipbook/sim/test_sw/build/test.hex
+
+test_final: test.hex test_sim.elf
+	$(MAKE) -C $(DUT_PATH) clean
+	$(MAKE) -C $(DUT_PATH)
+	$(PY_PATH) test_scripts/test_script.py -hex="$(HEX_PATH)"
 
 test.hex: test.elf
 	riscv64-unknown-elf-objcopy -O binary $(BUILD_DIR)$< $(BUILD_DIR)test.bin
@@ -14,7 +21,7 @@ test_sim.elf: $(ASM_OBJS)
 test.elf: $(ASM_OBJS)
 	riscv64-unknown-elf-ld --no-relax -m elf32lriscv -T script.lds -o $(BUILD_DIR)$@ $^
 
-$(ASM_OBJS): $(BUILD_DIR)%.o : %.asm
+$(ASM_OBJS): $(BUILD_DIR)%.o : $(BUILD_DIR)%.s
 	mkdir -p $(BUILD_DIR)
 	riscv64-unknown-elf-as -march=rv32i -mabi=ilp32 -o $@ $<
 

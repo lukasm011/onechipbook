@@ -27,7 +27,7 @@ module cpu_tb;
     always #5 clk <= ~clk;
     initial begin
         integer progsize = 0, expected_x5 = 0, expected_x6 = 0;
-        if($value$plusargs("PROGSIZE=%d", progsize) || $value$plusargs("EXPECTEDX5=%d",expected_x5) || $value$plusargs("EXPECTEDX6=%d",expected_x6))
+        if($value$plusargs("PROGSIZE=%d", progsize))
             $display("PROGSIZE OF %d RECEIVED", progsize);
         else
             progsize = 44; //default value

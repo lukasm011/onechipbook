@@ -6,7 +6,11 @@ module dummy_mem#(
     native_if bus
 );
     logic [31 : 0] mem [0 : MEM_WORDS];
-    initial $readmemh("/home/lukas/digital/onechipbook/sim/test_sw/build/test.hex", mem);
+    initial begin
+    string hex_file = "/home/lukas/digital/onechipbook/sim/test_sw/build/test.hex";
+    if($value$plusargs("HEX_FILE=%s", hex_file)) $display("Got hexfile. %s", hex_file);
+    $readmemh(hex_file, mem);
+    end
     typedef enum {IDLE, READ, WRITE} state_t;
     state_t state;
     //NOTE: NOT TO BE USED FOR PERFORMANCE BENCHMARKING AS THE CYCLES
