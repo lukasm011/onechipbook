@@ -8,7 +8,7 @@ module dummy_mem#(
     logic [31 : 0] mem [0 : MEM_WORDS];
     localparam addr_width = $clog2(MEM_WORDS);
     initial begin
-    string hex_file = "/home/lukas/digital/onechipbook/sim/test_sw/build/test.hex";
+    static string hex_file = "/home/lukas/digital/onechipbook/sim/test_sw/build/test.hex";
     if($value$plusargs("HEX_FILE=%s", hex_file)) $display("Got hexfile. %s", hex_file);
     $readmemh(hex_file, mem);
     end

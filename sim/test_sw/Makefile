@@ -11,7 +11,7 @@ MEMSIZE := 20000
 test_final: test.hex test_sim.elf
 	$(MAKE) -C $(DUT_PATH) clean
 	$(MAKE) -C $(DUT_PATH)
-	$(PY_PATH) test_scripts/test_script.py -hex="$(HEX_PATH)" -memsize=$(MEMSIZE)
+	$(PY_PATH) test_scripts/test_script.py -hex="$(HEX_PATH)" -memsize=$(MEMSIZE) -startaddr=0x4000
 
 test.hex: test.elf
 	riscv64-unknown-elf-objcopy -O binary $(BUILD_DIR)$< $(BUILD_DIR)test.bin

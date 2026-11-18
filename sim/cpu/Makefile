@@ -1,5 +1,5 @@
 .PHONY: clean
-CPU_SRCS := $(addprefix ../../rtl/cpu/, ../buspkgs.sv alu.sv regfile.sv controller.sv datapath.sv top/cpu_top.sv)
+CPU_SRCS := $(addprefix ../../rtl/cpu/, ../busifaces.sv alu.sv regfile.sv controller.sv datapath.sv top/cpu_top.sv)
 VERILATOR_FLAGS := --binary --trace-fst -Wall -Wno-fatal
 CAD_ENV := ~/oss-cad-suite/bin/
 

@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 module memunit#(
     parameter integer MEM_BLKS = 32
     //

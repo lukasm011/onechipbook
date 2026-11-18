@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 module datapath#(
     parameter integer PROGADDR_START = 'h0
 )(
@@ -91,8 +92,7 @@ module datapath#(
         // REGFILE SIGNALS
         rf_out_next[0] = reg_data_a;
         rf_out_next[1] = reg_data_b;
-
-        //INSTR
-        instr = instr_reg;
     end
+    //INSTR
+    assign instr = instr_reg;
 endmodule

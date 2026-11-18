@@ -3,7 +3,7 @@ module cpu_top(
     input logic resetn,
     native_if bus
 );
-    logic regwrite, pcwrite, irwrite, memoutsrc, regsrc, srcasel, pcsrc, aluoutwrite, sign;
+    logic pcwrite, irwrite, memoutsrc, regsrc, srcasel, pcsrc, aluoutwrite, sign;
     logic [1 : 0] srcbsel;
     logic [9 : 0] alu_controlvec;
     logic [31 : 0] instr;

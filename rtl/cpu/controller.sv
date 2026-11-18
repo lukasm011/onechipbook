@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 module controller (
     input logic clk,
     input logic resetn,
@@ -103,6 +104,10 @@ module controller (
                         loadtype: begin
                             next_state = L_EXEC;
                         end
+                        default: begin
+                            //OPCODE NOT RECOGNIZED, SKIP
+                            next_state = FETCH;
+                        end
                     endcase
                 end
                 R_EXEC: begin
@@ -117,7 +122,7 @@ module controller (
                         4: alu_controlvec[xor_bit] = 1;
                         5: begin
                            alu_controlvec[sr_bit] = 1;
-                           if(!funct7) alu_controlvec[arlog_bit] = 1; 
+                           if(|funct7 == 0) alu_controlvec[arlog_bit] = 1; 
                         end
                         6:
                             alu_controlvec[or_bit] = 1;
@@ -143,7 +148,7 @@ module controller (
                         4: alu_controlvec[xor_bit] = 1;
                         5: begin
                            alu_controlvec[sr_bit] = 1;
-                           if(!imm[11:5]) alu_controlvec[arlog_bit] = 1;  
+                           if(|imm[11:5] == 0) alu_controlvec[arlog_bit] = 1;  
                         end
                         6:
                             alu_controlvec[or_bit] = 1;

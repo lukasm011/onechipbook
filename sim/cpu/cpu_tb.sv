@@ -26,7 +26,7 @@ module cpu_tb;
 
     always #5 clk <= ~clk;
     initial begin
-        integer progsize = 0, override = 0;
+        static integer progsize = 0, override = 0;
         if($value$plusargs("PROGSIZE=%d", progsize))
             $display("PROGSIZE OF %d RECEIVED", progsize);
         else
