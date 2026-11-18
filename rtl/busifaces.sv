@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 interface axi_if;
     //AW BUS
 	logic mem_axi_awvalid;
