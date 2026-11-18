@@ -1,8 +1,8 @@
 module controller (
     input logic clk,
     input logic resetn,
-    output logic regwrite,
     output logic [9 : 0] alu_controlvec,
+    output logic aluoutwrite,
     output logic memoutsrc,
     output logic pcwrite,
     output logic irwrite,
@@ -11,8 +11,11 @@ module controller (
     output logic [1 : 0] srcbsel,
     output logic mvalid,
     output logic pcsrc,
+    input logic [31 : 0] instr,
     input logic svalid,
-    input logic [31 : 0] instr
+    output logic [3 : 0] wstrb,
+    output logic [3 : 0] rstrb,
+    output logic reg_sign
 );
     //Instruction sections
     logic [6 : 0] opcode;
@@ -33,10 +36,11 @@ module controller (
     //Opcodes
     localparam logic [6 : 0] rtype = 7'b0110011;
     localparam logic [6 : 0] itype = 7'b0010011;
+    localparam logic [6 : 0] loadtype = 7'b000011;
     // Next signal values
     logic next_mvalid;
     //States
-    typedef enum {FETCH, DECODE, R_EXEC, R_WB, I_EXEC} state_t;
+    typedef enum {FETCH, DECODE, R_EXEC, R_WB, I_EXEC, L_EXEC, L_MEM, L_WB} state_t;
     state_t state, next_state;
     //
     // Clocked control
@@ -52,7 +56,7 @@ module controller (
         //
         // Default values
         //
-        regwrite = 0;
+        rstrb = 0;
         alu_controlvec = 0;
         memoutsrc = 0;
         pcwrite = 0;
@@ -67,6 +71,9 @@ module controller (
         funct3 = instr[14 : 12];
         funct7 = instr[31 : 25];
         imm = instr[31 : 20];
+        aluoutwrite = 0;
+        wstrb = 0;
+        reg_sign = 0;
         if(~resetn) begin
             next_state = FETCH;
             pcsrc = 1; //LOAD PROGADDR_START
@@ -78,6 +85,7 @@ module controller (
                     irwrite = 1;
                     srcbsel = 1; //Add 4
                     alu_controlvec[add_bit] = 1;
+                    aluoutwrite = 1;
                     if(svalid) begin
                         next_mvalid = 0;
                         next_state = DECODE;
@@ -92,11 +100,15 @@ module controller (
                         itype: begin
                             next_state = I_EXEC;
                         end
+                        loadtype: begin
+                            next_state = L_EXEC;
+                        end
                     endcase
                 end
                 R_EXEC: begin
                     srcbsel = 0;
                     srcasel = 1;
+                    aluoutwrite = 1;
                     case(funct3)
                         0: alu_controlvec[|funct7 ? sub_bit : add_bit] = 1;
                         1: alu_controlvec[sll_bit] = 1;
@@ -116,12 +128,13 @@ module controller (
                 end
                 R_WB: begin
                     regsrc = 1;
-                    regwrite = 1;
+                    rstrb = 4'b1111;
                     next_state = FETCH;
                 end
                 I_EXEC: begin
                     srcbsel = 2;
                     srcasel = 1;
+                    aluoutwrite = 1;
                     case(funct3)
                         0: alu_controlvec[add_bit] = 1;
                         1: alu_controlvec[sll_bit] = 1;
@@ -138,6 +151,47 @@ module controller (
                             alu_controlvec[and_bit] = 1;
                     endcase
                     next_state = R_WB;
+                end
+                L_EXEC: begin
+                    srcbsel = 2;
+                    srcasel = 1;
+                    alu_controlvec[add_bit] = 1;
+                    aluoutwrite = 1;
+                    next_state = L_MEM;
+                    next_mvalid = 1;
+                end
+                L_MEM: begin
+                    memoutsrc = 1;
+                    next_mvalid = 1;
+                    if(svalid) begin
+                        irwrite = 1;
+                        next_mvalid = 0;
+                        rstrb = 4'b1111;
+                        regsrc = 0;
+                        case(funct3)
+                            0: begin
+                                rstrb = 4'b0001;
+                                reg_sign = 1;
+                            end
+                            1: begin
+                                rstrb = 4'b0011;
+                                reg_sign = 1;
+                            end
+                            2: begin
+                                rstrb = 4'b1111;
+                            end
+                            4: begin
+                                rstrb = 4'b0001;
+                            end
+                            default: begin
+                                rstrb = 4'b0011;
+                            end
+                        endcase
+                        next_state = FETCH;
+                        //NOTE: IT IS POSSIBLE TO ADD A REGISTER WHICH WILL TAKE THE VALUES 
+                        //AS THEY BECOME VALID TO AVOID TIMING COMPLICATIONS WITH THE REGFILE
+                        //IN THIS CASE AN EXTRA STATE (L_WB) SHOULD BE ADDED TO HANDLE THIS
+                    end
                 end
             endcase
         end

@@ -11,7 +11,7 @@ module cpu_tb;
     );
 
     dummy_mem #(
-        .MEM_WORDS(1024)
+        .MEM_WORDS(10_000)
     ) dummy_mem_instance (
         .clk(clk),
         .resetn(resetn),
@@ -26,24 +26,31 @@ module cpu_tb;
 
     always #5 clk <= ~clk;
     initial begin
-        integer progsize = 0, expected_x5 = 0, expected_x6 = 0;
+        integer progsize = 0, override = 0;
         if($value$plusargs("PROGSIZE=%d", progsize))
             $display("PROGSIZE OF %d RECEIVED", progsize);
         else
             progsize = 44; //default value
-        $dumpfile("obj_dir/waveform.fst");
+        $dumpfile("/home/lukas/digital/onechipbook/sim/cpu/obj_dir/waveform.fst");
         $dumpvars;
         clk = 0;
         resetn = 1;
         assert_reset();
-        while(dut.datapath_instance.pc != progsize) begin
-            @(posedge clk);
+        if($value$plusargs("OVERRIDE=%d", override)) begin
+            //OVERRIDE INSTRUCTIONS AND RUN FOR A CERTAIN NUMBER OF CLOCK CYCLES
+            for(integer i = 0; i < override; i++) begin
+                @(posedge clk);
+            end
         end
-        for(integer i = 1; i < 32; i++) begin
-            $display("%d: %h", i, dut.datapath_instance.regfile_instance.registers[i]);
+        else begin
+            //NORMAL EXECUTION
+            while(dut.datapath_instance.pc != progsize) begin
+                @(posedge clk);
+            end
+            for(integer i = 1; i < 32; i++) begin
+                $display("%d: %h", i, dut.datapath_instance.regfile_instance.registers[i]);
+            end
         end
         $finish;
     end
-
-
 endmodule

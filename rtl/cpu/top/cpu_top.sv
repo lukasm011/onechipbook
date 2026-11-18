@@ -3,14 +3,14 @@ module cpu_top(
     input logic resetn,
     native_if bus
 );
-    logic regwrite, pcwrite, irwrite, memoutsrc, regsrc, srcasel, pcsrc;
+    logic regwrite, pcwrite, irwrite, memoutsrc, regsrc, srcasel, pcsrc, aluoutwrite, sign;
     logic [1 : 0] srcbsel;
     logic [9 : 0] alu_controlvec;
     logic [31 : 0] instr;
+    logic [3 : 0] reg_strb;
     datapath datapath_instance (
         .clk(clk),
         .resetn(resetn),
-        .reg_enable(regwrite),
         .alu_controlvec(alu_controlvec),
         .memoutsrc(memoutsrc),
         .pcwrite(pcwrite),
@@ -20,13 +20,15 @@ module cpu_top(
         .srcbsel(srcbsel),
         .instr(instr),
         .pcsrc(pcsrc),
-        .bus(bus)
+        .bus(bus),
+        .reg_strb(reg_strb),
+        .reg_sign(sign),
+        .aluoutwrite(aluoutwrite)
     );
 
     controller controller_instance (
         .clk(clk),
         .resetn(resetn),
-        .regwrite(regwrite),
         .alu_controlvec(alu_controlvec),
         .memoutsrc(memoutsrc),
         .pcwrite(pcwrite),
@@ -37,6 +39,10 @@ module cpu_top(
         .mvalid(bus.mvalid),
         .svalid(bus.svalid),
         .pcsrc(pcsrc),
-        .instr(instr)
+        .instr(instr),
+        .reg_sign(sign),
+        .wstrb(bus.wstrb),
+        .rstrb(reg_strb),
+        .aluoutwrite(aluoutwrite)
     );
 endmodule

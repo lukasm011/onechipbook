@@ -4,8 +4,10 @@ module datapath#(
     input logic clk,
     input logic resetn,
     //CONTROL SIGNALS
-    input logic reg_enable,
+    input logic [3 : 0] reg_strb,
     input logic [9 : 0] alu_controlvec,
+    input logic aluoutwrite,
+    input logic reg_sign,
     input logic memoutsrc,
     input logic pcwrite,
     input logic irwrite,
@@ -29,10 +31,11 @@ module datapath#(
         .addr_a(reg_addr_a),
         .addr_b(reg_addr_b),
         .addr_c(reg_addr_c),
-        .enable(reg_enable),
         .data_a(reg_data_a),
         .data_b(reg_data_b),
-        .data_c(reg_data_c)
+        .data_c(reg_data_c),
+        .strb(reg_strb),
+        .sign(reg_sign)
     );
 
     alu alu_instance (
@@ -53,7 +56,7 @@ module datapath#(
         if(irwrite) instr_reg <= bus.rdata;
 
         //ALU OUT
-        alu_result <= alu_result_next;
+        if(aluoutwrite) alu_result <= alu_result_next;
 
         //REGFILE DATA
         rf_out <= rf_out_next;
@@ -79,7 +82,7 @@ module datapath#(
         endcase
 
         // BUS SIGNALS
-        bus.addr = pc;
+        bus.addr = memoutsrc ? alu_result : pc;
         bus.wdata = 0;
 
         // PC SIGNALS

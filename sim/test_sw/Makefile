@@ -5,11 +5,13 @@ ASM_OBJS := $(patsubst %.s, $(BUILD_DIR)%.o, $(ASM_SRCS))
 PY_PATH := ~/venvs/cocotb-venv/bin/python3
 DUT_PATH := /home/lukas/digital/onechipbook/sim/cpu/
 HEX_PATH := /home/lukas/digital/onechipbook/sim/test_sw/build/test.hex
+MEMSIZE := 20000
+
 
 test_final: test.hex test_sim.elf
 	$(MAKE) -C $(DUT_PATH) clean
 	$(MAKE) -C $(DUT_PATH)
-	$(PY_PATH) test_scripts/test_script.py -hex="$(HEX_PATH)"
+	$(PY_PATH) test_scripts/test_script.py -hex="$(HEX_PATH)" -memsize=$(MEMSIZE)
 
 test.hex: test.elf
 	riscv64-unknown-elf-objcopy -O binary $(BUILD_DIR)$< $(BUILD_DIR)test.bin
