@@ -83,4 +83,4 @@ for i in range(1, 32):
 if(test):
 	print("\033[92mTest passed!\033[0m")
 else:
-	printf("\033[91mTest failed!\033[0m")
+	print("\033[91mTest failed!\033[0m")

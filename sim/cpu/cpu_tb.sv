@@ -11,7 +11,7 @@ module cpu_tb;
     );
 
     dummy_mem #(
-        .MEM_WORDS(10_000)
+        .MEM_WORDS(1_000_000)
     ) dummy_mem_instance (
         .clk(clk),
         .resetn(resetn),
