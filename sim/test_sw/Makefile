@@ -5,7 +5,6 @@ ASM_OBJS := $(patsubst %.s, $(BUILD_DIR)%.o, $(ASM_SRCS))
 PY_PATH := ~/venvs/cocotb-venv/bin/python3
 DUT_PATH := /home/lukas/digital/onechipbook/sim/cpu/
 HEX_PATH := /home/lukas/digital/onechipbook/sim/test_sw/build/test.hex
-MEMSIZE := 20000
 
 
 test_final: test.hex test_sim.elf
