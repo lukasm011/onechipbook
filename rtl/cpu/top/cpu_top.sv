@@ -3,7 +3,7 @@ module cpu_top(
     input logic resetn,
     native_if bus
 );
-    logic pcwrite, irwrite, memoutsrc, regsrc, srcasel, pcsrc, aluoutwrite, sign;
+    logic pcwrite, irwrite, memoutsrc, regsrc, srcasel, pcsrc, aluoutwrite, sign, immsrc;
     logic [1 : 0] srcbsel;
     logic [9 : 0] alu_controlvec;
     logic [31 : 0] instr;
@@ -23,7 +23,8 @@ module cpu_top(
         .bus(bus),
         .reg_strb(reg_strb),
         .reg_sign(sign),
-        .aluoutwrite(aluoutwrite)
+        .aluoutwrite(aluoutwrite),
+        .immsrc(immsrc)
     );
 
     controller controller_instance (
@@ -43,6 +44,7 @@ module cpu_top(
         .reg_sign(sign),
         .wstrb(bus.wstrb),
         .rstrb(reg_strb),
-        .aluoutwrite(aluoutwrite)
+        .aluoutwrite(aluoutwrite),
+        .immsrc(immsrc)
     );
 endmodule

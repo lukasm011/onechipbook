@@ -15,6 +15,7 @@ module regfile #(
 );
     logic [31 : 0] registers [1 : 31]; //x0 can be skipped
     logic msb;
+    logic [4 : 0] display_addr;
     always_ff @(posedge clk) begin
         if(~resetn) begin
             registers[2] <= STACKADDR; //sp
@@ -22,8 +23,9 @@ module regfile #(
         else begin
             if(|strb && |addr_c) begin
                 //Output all register writes
-                $display("%d : %h", addr_c, data_c);
+                $strobe("%d : %h", display_addr, registers[display_addr]);
                 //TODO: IMPLEMENT AS MASK
+                display_addr <= addr_c;
                 //registers[addr_c] <= data_c & mask;
                 if(strb[0]) registers[addr_c][7 : 0] <= data_c[7 : 0];
 

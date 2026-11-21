@@ -16,13 +16,14 @@ module datapath#(
     input logic srcasel,
     input logic [1 : 0] srcbsel,
     input logic pcsrc,
+    input logic immsrc,
     output logic [31 : 0] instr,
     //BUS INTERFACE
     native_if bus
 );
     logic [4 : 0] reg_addr_a, reg_addr_b, reg_addr_c;
     logic [31 : 0] reg_data_a, reg_data_b, reg_data_c, alu_srca, alu_srcb, alu_result_next, alu_result;
-    logic [31 : 0] pc, pc_next, instr_reg, rf_out [2], rf_out_next[2], imm_sext;
+    logic [31 : 0] pc, pc_next, rf_out [2], rf_out_next[2], imm_sext;
 
     regfile #(
         .STACKADDR('hffff)
@@ -54,7 +55,7 @@ module datapath#(
         if(pcwrite) pc <= pc_next;
 
         //IR DATA
-        if(irwrite) instr_reg <= bus.rdata;
+        if(irwrite) instr <= bus.rdata;
 
         //ALU OUT
         if(aluoutwrite) alu_result <= alu_result_next;
@@ -67,14 +68,17 @@ module datapath#(
     //
     always_comb begin
         // REGFILE SIGNALS
-        reg_addr_a = instr_reg[19 : 15];
-        reg_addr_b = instr_reg[24 : 20];
-        reg_addr_c = instr_reg[11 : 7];
+        reg_addr_a = instr[19 : 15];
+        reg_addr_b = instr[24 : 20];
+        reg_addr_c = instr[11 : 7];
         reg_data_c = regsrc ? alu_result : bus.rdata;
 
         // ALU SIGNALS
         alu_srca = srcasel ? rf_out[0] : pc;
-        imm_sext = {{20{instr[31]}}, instr[31 : 20]};
+        //Sign extension:
+        //The lowest 5 bits of the immediate can come either from the continuous I-type block
+        //or from imm[4 : 0] field of the S-type block. The top 26 bits always come from the same source.
+        imm_sext = {{20{instr[31]}}, instr[31 : 25], immsrc ? instr[11 : 7] : instr[24 : 20]};
         case(srcbsel)
             0: alu_srcb = rf_out[1];
             1: alu_srcb = 4; //for PC incrementation
@@ -82,17 +86,14 @@ module datapath#(
             default: begin end //TODO and 3
         endcase
 
-        // BUS SIGNALS
-        bus.addr = memoutsrc ? alu_result : pc;
-        bus.wdata = 0;
-
         // PC SIGNALS
         pc_next = pcsrc ? PROGADDR_START : alu_result;
 
         // REGFILE SIGNALS
         rf_out_next[0] = reg_data_a;
         rf_out_next[1] = reg_data_b;
-    end
-    //INSTR
-    assign instr = instr_reg;
+    end 
+    // BUS SIGNALS
+    assign bus.addr = memoutsrc ? alu_result : pc;
+    assign bus.wdata = rf_out[1];
 endmodule

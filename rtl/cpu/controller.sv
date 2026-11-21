@@ -16,7 +16,8 @@ module controller (
     input logic svalid,
     output logic [3 : 0] wstrb,
     output logic [3 : 0] rstrb,
-    output logic reg_sign
+    output logic reg_sign,
+    output logic immsrc
 );
     //Instruction sections
     logic [6 : 0] opcode;
@@ -38,10 +39,11 @@ module controller (
     localparam logic [6 : 0] rtype = 7'b0110011;
     localparam logic [6 : 0] itype = 7'b0010011;
     localparam logic [6 : 0] loadtype = 7'b000011;
+    localparam logic [6 : 0] stype = 7'b0100011;
     // Next signal values
     logic next_mvalid;
     //States
-    typedef enum {FETCH, DECODE, R_EXEC, R_WB, I_EXEC, L_EXEC, L_MEM, L_WB} state_t;
+    typedef enum {FETCH, DECODE, R_EXEC, R_WB, I_EXEC, L_EXEC, L_MEM, L_WB, S_EXEC, S_MEM} state_t;
     state_t state, next_state;
     //
     // Clocked control
@@ -75,6 +77,7 @@ module controller (
         aluoutwrite = 0;
         wstrb = 0;
         reg_sign = 0;
+        immsrc = 0;
         if(~resetn) begin
             next_state = FETCH;
             pcsrc = 1; //LOAD PROGADDR_START
@@ -103,6 +106,9 @@ module controller (
                         end
                         loadtype: begin
                             next_state = L_EXEC;
+                        end
+                        stype: begin
+                            next_state = S_EXEC;
                         end
                         default: begin
                             //OPCODE NOT RECOGNIZED, SKIP
@@ -196,6 +202,34 @@ module controller (
                         //NOTE: IT IS POSSIBLE TO ADD A REGISTER WHICH WILL TAKE THE VALUES 
                         //AS THEY BECOME VALID TO AVOID TIMING COMPLICATIONS WITH THE REGFILE
                         //IN THIS CASE AN EXTRA STATE (L_WB) SHOULD BE ADDED TO HANDLE THIS
+                    end
+                end
+                S_EXEC: begin
+                    immsrc = 1;
+                    srcbsel = 2;
+                    srcasel = 1;
+                    alu_controlvec[add_bit] = 1;
+                    aluoutwrite = 1;
+                    next_state = S_MEM;
+                    next_mvalid = 1;
+                end
+                S_MEM: begin
+                    case(funct3)
+                        0: begin
+                            wstrb = 4'b0001; //sb
+                        end
+                        1: begin
+                            wstrb = 4'b0011; //sh
+                        end
+                        default: begin
+                            wstrb = 4'b1111; //sw
+                        end
+                    endcase
+                    memoutsrc = 1;
+                    next_mvalid = 1;
+                    if(svalid) begin
+                        next_mvalid = 0;
+                        next_state = FETCH;
                     end
                 end
             endcase
