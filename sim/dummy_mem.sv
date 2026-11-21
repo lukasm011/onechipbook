@@ -27,7 +27,7 @@ module dummy_mem#(
             case(state)
                 IDLE: begin
                     bus.svalid <= 0;
-                    if(bus.mvalid) begin
+                    if(bus.mvalid && ~bus.svalid) begin
                         state <= (|bus.wstrb) ? WRITE : READ;
                     end
                 end
