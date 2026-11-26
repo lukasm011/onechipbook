@@ -11,7 +11,7 @@ module cpu_tb;
     );
 
     dummy_mem #(
-        .MEM_WORDS(1_000_000)
+        .MEM_WORDS(10_000_000)
     ) dummy_mem_instance (
         .clk(clk),
         .resetn(resetn),
@@ -39,6 +39,7 @@ module cpu_tb;
         if($value$plusargs("OVERRIDE=%d", override)) begin
             //OVERRIDE INSTRUCTIONS AND RUN FOR A CERTAIN NUMBER OF CLOCK CYCLES
             for(integer i = 0; i < override; i++) begin
+                if(dut.datapath_instance.regfile_instance.strb) $display("0x%h", dut.datapath_instance.pc-4);
                 @(posedge clk);
             end
         end

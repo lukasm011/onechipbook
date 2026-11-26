@@ -21,20 +21,20 @@ module regfile #(
             registers[2] <= STACKADDR; //sp
         end
         else begin
-            if(|strb && |addr_c) begin
-                //Output all register writes
+            if(|addr_c && |strb) begin
                 $strobe("%d : %h", display_addr, registers[display_addr]);
+                display_addr <= addr_c; //required as strobe displays values at end of timestep
+                //Output all register writes
                 //TODO: IMPLEMENT AS MASK
-                display_addr <= addr_c;
                 //registers[addr_c] <= data_c & mask;
                 if(strb[0]) registers[addr_c][7 : 0] <= data_c[7 : 0];
 
                 if(strb[1]) registers[addr_c][15 : 8] <= data_c[15 : 8];
                 else registers[addr_c][15 : 8] <= {8{msb}};
-                
+
                 if(strb[2]) registers[addr_c][23 : 16] <= data_c[23 : 16];
                 else registers[addr_c][23 : 16] <= {8{msb}};
-                
+
                 if(strb[3]) registers[addr_c][31 : 24] <= data_c[31 : 24];
                 else registers[addr_c][31 : 24] <= {8{msb}};
             end 

@@ -6,7 +6,7 @@ module datapath#(
     input logic resetn,
     //CONTROL SIGNALS
     input logic [3 : 0] reg_strb,
-    input logic [9 : 0] alu_controlvec,
+    input logic [10 : 0] alu_controlvec,
     input logic aluoutwrite,
     input logic reg_sign,
     input logic memoutsrc,
@@ -18,11 +18,13 @@ module datapath#(
     input logic pcsrc,
     input logic immsrc,
     output logic [31 : 0] instr,
+    output logic alu_zeroflag,
+    output logic ar_bypass,
     //BUS INTERFACE
     native_if bus
 );
     logic [4 : 0] reg_addr_a, reg_addr_b, reg_addr_c;
-    logic [31 : 0] reg_data_a, reg_data_b, reg_data_c, alu_srca, alu_srcb, alu_result_next, alu_result;
+    logic [31 : 0] reg_data_a, reg_data_b, reg_data_c, alu_srca, alu_srcb, alu_result_next, alu_result, alu_result_reg;
     logic [31 : 0] pc, pc_next, rf_out [2], rf_out_next[2], imm_sext;
 
     regfile #(
@@ -44,7 +46,9 @@ module datapath#(
         .srca(alu_srca),
         .srcb(alu_srcb),
         .result(alu_result_next),
-        .controlvec(alu_controlvec)
+        .controlvec(alu_controlvec),
+        .zeroflag(alu_zeroflag),
+        .srcc(pc)
     );
 
     //
@@ -58,7 +62,7 @@ module datapath#(
         if(irwrite) instr <= bus.rdata;
 
         //ALU OUT
-        if(aluoutwrite) alu_result <= alu_result_next;
+        if(aluoutwrite) alu_result_reg<= alu_result_next;
 
         //REGFILE DATA
         rf_out <= rf_out_next;
@@ -67,14 +71,16 @@ module datapath#(
     // Datapath combinational
     //
     always_comb begin
+        // ALU SIGNALS
+        alu_srca = srcasel ? rf_out[0] : pc;
+        alu_result = ar_bypass ? alu_result_next : alu_result_reg;
+
         // REGFILE SIGNALS
         reg_addr_a = instr[19 : 15];
         reg_addr_b = instr[24 : 20];
         reg_addr_c = instr[11 : 7];
         reg_data_c = regsrc ? alu_result : bus.rdata;
 
-        // ALU SIGNALS
-        alu_srca = srcasel ? rf_out[0] : pc;
         //Sign extension:
         //The lowest 5 bits of the immediate can come either from the continuous I-type block
         //or from imm[4 : 0] field of the S-type block. The top 26 bits always come from the same source.

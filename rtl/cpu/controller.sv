@@ -2,7 +2,7 @@
 module controller (
     input logic clk,
     input logic resetn,
-    output logic [9 : 0] alu_controlvec,
+    output logic [10 : 0] alu_controlvec,
     output logic aluoutwrite,
     output logic memoutsrc,
     output logic pcwrite,
@@ -17,7 +17,9 @@ module controller (
     output logic [3 : 0] wstrb,
     output logic [3 : 0] rstrb,
     output logic reg_sign,
-    output logic immsrc
+    output logic immsrc,
+    input logic alu_zeroflag,
+    output logic ar_bypass
 );
     //Instruction sections
     logic [6 : 0] opcode;
@@ -35,15 +37,17 @@ module controller (
     localparam int sll_bit = 7;
     localparam int sr_bit = 8;
     localparam int arlog_bit = 9;
+    localparam int add_bypass_bit = 10;
     //Opcodes
     localparam logic [6 : 0] rtype = 7'b0110011;
     localparam logic [6 : 0] itype = 7'b0010011;
     localparam logic [6 : 0] loadtype = 7'b000011;
     localparam logic [6 : 0] stype = 7'b0100011;
+    localparam logic [6 : 0] btype = 7'b1100011;
     // Next signal values
-    logic next_mvalid;
+    logic next_mvalid, branch_cond;
     //States
-    typedef enum {FETCH, DECODE, R_EXEC, R_WB, I_EXEC, L_EXEC, L_MEM, L_WB, S_EXEC, S_MEM} state_t;
+    typedef enum {FETCH, DECODE, R_EXEC, R_WB, I_EXEC, L_EXEC, L_MEM, L_WB, S_EXEC, S_MEM, B_EXEC1, B_EXEC2, B_WB} state_t;
     state_t state, next_state;
     //
     // Clocked control
@@ -78,6 +82,8 @@ module controller (
         wstrb = 0;
         reg_sign = 0;
         immsrc = 0;
+        ar_bypass = 0;
+        branch_cond = 0;
         if(~resetn) begin
             next_state = FETCH;
             pcsrc = 1; //LOAD PROGADDR_START
@@ -110,6 +116,9 @@ module controller (
                         stype: begin
                             next_state = S_EXEC;
                         end
+                        btype: begin
+                            next_state = B_EXEC1;
+                        end
                         default: begin
                             //OPCODE NOT RECOGNIZED, SKIP
                             next_state = FETCH;
@@ -121,12 +130,13 @@ module controller (
                     srcasel = 1;
                     aluoutwrite = 1;
                     case(funct3)
-                        0: alu_controlvec[|funct7 ? sub_bit : add_bit] = 1;
-                        1: alu_controlvec[sll_bit] = 1;
-                        2: alu_controlvec[cmps_bit] = 1;
-                        3: alu_controlvec[cmpu_bit] = 1;
-                        4: alu_controlvec[xor_bit] = 1;
+                        0: alu_controlvec[|funct7 ? sub_bit : add_bit] = 1; //addsub
+                        1: alu_controlvec[sll_bit] = 1; //sll
+                        2: alu_controlvec[cmps_bit] = 1; //cmps
+                        3: alu_controlvec[cmpu_bit] = 1; //cmpu
+                        4: alu_controlvec[xor_bit] = 1; //xor
                         5: begin
+                            //srl sra
                            alu_controlvec[sr_bit] = 1;
                            if(|funct7 == 0) alu_controlvec[arlog_bit] = 1; 
                         end
@@ -181,20 +191,25 @@ module controller (
                         regsrc = 0;
                         case(funct3)
                             0: begin
+                                //lb
                                 rstrb = 4'b0001;
                                 reg_sign = 1;
                             end
                             1: begin
+                                //lh
                                 rstrb = 4'b0011;
                                 reg_sign = 1;
                             end
                             2: begin
+                                //lw
                                 rstrb = 4'b1111;
                             end
                             4: begin
+                                //lbu
                                 rstrb = 4'b0001;
                             end
                             default: begin
+                                //lhu
                                 rstrb = 4'b0011;
                             end
                         endcase
@@ -231,6 +246,59 @@ module controller (
                         next_mvalid = 0;
                         next_state = FETCH;
                     end
+                end
+                B_EXEC1: begin
+                    case(funct3)
+                        0: begin
+                            //beq
+                            alu_controlvec[xor_bit] = 1;
+                            branch_cond = alu_zeroflag;
+                        end
+                        1: begin
+                            //bne
+                            alu_controlvec[xor_bit] = 1;
+                            branch_cond = !alu_zeroflag;
+                        end
+                        4: begin
+                            //blt
+                            alu_controlvec[cmps_bit] = 1;
+                            branch_cond = !alu_zeroflag;
+                        end
+                        5: begin
+                            //bge
+                            alu_controlvec[cmps_bit] = 1;
+                            branch_cond = alu_zeroflag;
+                        end
+                        6: begin
+                            //bltu
+                            alu_controlvec[cmpu_bit] = 1;
+                            branch_cond = !alu_zeroflag;
+                        end
+                        7: begin 
+                            //bgeu
+                            alu_controlvec[cmpu_bit] = 1;
+                            branch_cond = alu_zeroflag;
+                        end
+                        default: begin
+                            //placeholder
+                        end
+                    endcase
+                    //Decrement program counter in preparation for (possibly) incrementation
+                    srcasel = 1;
+                    alu_controlvec[add_bypass_bit] = 1;
+                    ar_bypass = branch_cond; //bypass ALU Result register if condition is met
+                    pcwrite = branch_cond; //Write to PC if condition is met
+                    next_state = branch_cond ? B_EXEC2 : FETCH;
+                end
+                B_EXEC2: begin
+                    srcasel = 0;
+                    srcbsel = 2;
+                    alu_controlvec[add_bit] = 1;
+                    immsrc = 1;
+                    ar_bypass = 1;
+                    pcsrc = 0;
+                    pcwrite = 1;
+                    next_state = FETCH;
                 end
             endcase
         end
